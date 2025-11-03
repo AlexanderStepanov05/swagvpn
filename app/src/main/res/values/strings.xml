@@ -1,3 +1,25 @@
 <resources>
-    <string name="app_name">swagvpn</string>
+    <string name="app_name">Swag VPN</string>
+
+    <!-- Navigation -->
+    <string name="screen_home">Home</string>
+    <string name="screen_servers">Servers</string>
+    <string name="screen_settings">Settings</string>
+
+    <!-- Home Screen -->
+    <string name="home_tap_to_connect">Tap to connect</string>
+    <string name="home_connecting">Connecting...</string>
+    <string name="home_connected">Connected</string>
+    <string name="home_error">Error: %s</string>
+    <string name="home_permission_denied">Permission denied</string>
+
+    <!-- Servers Screen -->
+    <string name="servers_ping">Ping</string>
+    <string name="servers_ping_ms">%d ms</string>
+    <string name="servers_selected">Selected</string>
+    <string name="servers_import_config">Import Config</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_auto_connect">Auto-connect on launch</string>
+    <string name="settings_dark_theme">Dark Theme</string>
 </resources>

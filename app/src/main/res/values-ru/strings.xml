@@ -1,0 +1,25 @@
+<resources>
+    <string name="app_name">Swag VPN</string>
+
+    <!-- Navigation -->
+    <string name="screen_home">Главная</string>
+    <string name="screen_servers">Серверы</string>
+    <string name="screen_settings">Настройки</string>
+
+    <!-- Home Screen -->
+    <string name="home_tap_to_connect">Нажмите для подключения</string>
+    <string name="home_connecting">Подключение...</string>
+    <string name="home_connected">Подключено</string>
+    <string name="home_error">Ошибка: %s</string>
+    <string name="home_permission_denied">Разрешение отклонено</string>
+
+    <!-- Servers Screen -->
+    <string name="servers_ping">Пинг</string>
+    <string name="servers_ping_ms">%d мс</string>
+    <string name="servers_selected">Выбрано</string>
+    <string name="servers_import_config">Импортировать конфиг</string>
+
+    <!-- Settings Screen -->
+    <string name="settings_auto_connect">Авто-подключение при запуске</string>
+    <string name="settings_dark_theme">Тёмная тема</string>
+</resources>
