@@ -18,6 +18,15 @@
     <string name="servers_ping_ms">%d ms</string>
     <string name="servers_selected">Selected</string>
     <string name="servers_import_config">Import Config</string>
+    <string name="delete">Delete</string>
+    <string name="add_server_dialog_title">Add Server</string>
+    <string name="add_server_dialog_text">Choose an import method:</string>
+    <string name="add_server_dialog_import_file">From File</string>
+    <string name="add_server_dialog_paste">From Clipboard</string>
+    <string name="delete_server_confirmation_title">Delete Server?</string>
+    <string name="delete_server_confirmation_text">This action cannot be undone.</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
 
     <!-- Settings Screen -->
     <string name="settings_auto_connect">Auto-connect on launch</string>

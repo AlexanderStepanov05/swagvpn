@@ -22,7 +22,7 @@ import javax.inject.Inject
 data class ServersUiState(
     val servers: List<Server> = emptyList(),
     val selectedServerId: String? = null,
-    val isLoading: Boolean = true,
+    val isLoading: Boolean = false,
     val pingingServerId: String? = null
 )
 
@@ -37,32 +37,39 @@ class ServersViewModel @Inject constructor(
     private val _importConfigRequest = MutableSharedFlow<Unit>()
     val importConfigRequest = _importConfigRequest.asSharedFlow()
 
-    init {
-        loadSampleServers()
+    fun deleteServer(serverId: String) {
+        _uiState.update { currentState ->
+            val newServers = currentState.servers.filterNot { it.id == serverId }
+            if (currentState.selectedServerId == serverId) {
+                selectedServerRepository.selectServer(null)
+                currentState.copy(servers = newServers, selectedServerId = null)
+            } else {
+                currentState.copy(servers = newServers)
+            }
+        }
     }
 
-    private fun loadSampleServers() {
-        // In a real app, these would be loaded from a database.
-        val sampleServers = listOf(
-            Server(id = "1", name = "USA - New York", country = "USA", countryCode = "US", config = "{}"),
-            Server(id = "2", name = "Germany - Frankfurt", country = "Germany", countryCode = "DE", config = "{}"),
-            Server(id = "3", name = "Japan - Tokyo", country = "Japan", countryCode = "JP", config = "{}"),
-            Server(id = "4", name = "UK - London", country = "UK", countryCode = "GB", config = "{}"),
-            Server(id = "5", name = "Singapore", country = "Singapore", countryCode = "SG", config = "{}")
+    fun addServerFromClipboard(uri: String) {
+        // In a real app, you would parse the URI and create a server from it
+        val newServer = Server(
+            id = UUID.randomUUID().toString(),
+            name = "Pasted Server",
+            country = "Clipboard",
+            countryCode = "XX",
+            config = uri
         )
         _uiState.update {
-            it.copy(servers = sampleServers, isLoading = false)
+            it.copy(servers = it.servers + newServer)
         }
     }
 
     fun onConfigImported(uri: Uri) {
-        // In a real app, you would read and parse the config file from the URI here.
         val newServer = Server(
             id = UUID.randomUUID().toString(),
             name = "Imported Server",
             country = "Unknown",
-            countryCode = "XX", // Represents an unknown country
-            config = "{\"v\": \"2\", \"ps\": \"Imported\", \"add\": \"127.0.0.1\", \"port\": \"1080\", \"id\": \"${UUID.randomUUID()}\", \"aid\": \"0\", \"net\": \"tcp\", \"type\": \"none\", \"host\": \"\", \"path\": \"\", \"tls\": \"\"}" // Example Vmess config
+            countryCode = "XX",
+            config = "{}"
         )
         _uiState.update {
             it.copy(servers = it.servers + newServer)
@@ -101,7 +108,6 @@ class ServersViewModel @Inject constructor(
             _uiState.update { state ->
                 val updatedServers = state.servers.map { server ->
                     if (server.id == serverId) {
-                        // A negative ping value from the core indicates an error.
                         val validPing = if (newPing >= 0) newPing.toInt() else null
                         server.copy(ping = validPing)
                     } else {
