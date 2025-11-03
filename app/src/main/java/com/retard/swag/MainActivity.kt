@@ -1,8 +1,10 @@
 package com.retard.swag
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,8 +16,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
@@ -45,7 +47,7 @@ import kotlinx.coroutines.launch
 
 sealed class Screen(val route: String, @StringRes val labelRes: Int, val icon: ImageVector) {
     object Home : Screen("home", R.string.screen_home, Icons.Default.Home)
-    object Servers : Screen("servers", R.string.screen_servers, Icons.Default.List)
+    object Servers : Screen("servers", R.string.screen_servers, Icons.AutoMirrored.Filled.List)
     object Settings : Screen("settings", R.string.screen_settings, Icons.Default.Settings)
 }
 
@@ -80,8 +82,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private val notificationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* We don't need to do anything with the result */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         lifecycleScope.launch {
             homeViewModel.permissionRequest.collect { intent ->

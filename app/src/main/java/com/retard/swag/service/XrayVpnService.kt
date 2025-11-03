@@ -1,5 +1,6 @@
 package com.retard.swag.service
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -68,6 +69,7 @@ class XrayVpnService : VpnService() {
         }
     }
 
+    @Suppress("DEPRECATION")
     private fun stopVpnFlow() {
         serviceScope.launch {
             XrayManager.stopXray()
@@ -95,6 +97,7 @@ class XrayVpnService : VpnService() {
         startForeground(NOTIFICATION_ID, createNotification("Initializing..."))
     }
 
+    @SuppressLint("MissingPermission")
     private fun updateNotification(text: String) {
         val notification = createNotification(text)
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
