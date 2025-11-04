@@ -35,13 +35,19 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             if (vpnState.value is VpnState.Connected) {
                 stopVpn()
+                return@launch
+            }
+
+            if (selectedServerRepository.selectedServer.value == null) {
+                XrayVpnService.vpnStateInternal.value = VpnState.Error(context.getString(R.string.home_no_server_selected))
+                return@launch
+            }
+
+            val vpnIntent = VpnService.prepare(context)
+            if (vpnIntent != null) {
+                _permissionRequest.emit(vpnIntent)
             } else {
-                val vpnIntent = VpnService.prepare(context)
-                if (vpnIntent != null) {
-                    _permissionRequest.emit(vpnIntent)
-                } else {
-                    onPermissionResult(true)
-                }
+                onPermissionResult(true)
             }
         }
     }
@@ -59,7 +65,7 @@ class HomeViewModel @Inject constructor(
     private suspend fun startVpn() {
         val selectedServer = selectedServerRepository.selectedServer.first()
         if (selectedServer == null) {
-            XrayVpnService.vpnStateInternal.value = VpnState.Error("No server selected")
+            XrayVpnService.vpnStateInternal.value = VpnState.Error(context.getString(R.string.home_no_server_selected))
             return
         }
 
@@ -67,7 +73,7 @@ class HomeViewModel @Inject constructor(
             action = XrayVpnService.ACTION_START
             putExtra(XrayVpnService.EXTRA_CONFIG, selectedServer.config)
         }
-        context.startService(intent)
+        context.startForegroundService(intent)
     }
 
     private fun stopVpn() {

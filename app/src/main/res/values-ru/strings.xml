@@ -12,6 +12,7 @@
     <string name="home_connected">Подключено</string>
     <string name="home_error">Ошибка: %s</string>
     <string name="home_permission_denied">Разрешение отклонено</string>
+    <string name="home_no_server_selected">Сервер не выбран</string>
 
     <!-- Servers Screen -->
     <string name="servers_ping">Пинг</string>
@@ -24,9 +25,11 @@
     <string name="add_server_dialog_import_file">Из файла</string>
     <string name="add_server_dialog_paste">Из буфера обмена</string>
     <string name="delete_server_confirmation_title">Удалить сервер?</string>
-    <string name="delete_server_confirmation_text">Это действие нельзя отменить.</string>
+    <string name="delete_server_confirmation_text">Вы уверены, что хотите удалить "%s"?</string>
     <string name="confirm">Подтвердить</string>
     <string name="cancel">Отмена</string>
+    <string name="server_added_toast">Сервер добавлен</string>
+    <string name="invalid_config_toast">Неверный формат конфигурации</string>
 
     <!-- Settings Screen -->
     <string name="settings_auto_connect">Авто-подключение при запуске</string>

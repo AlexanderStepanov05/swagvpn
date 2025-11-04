@@ -12,6 +12,7 @@
     <string name="home_connected">Connected</string>
     <string name="home_error">Error: %s</string>
     <string name="home_permission_denied">Permission denied</string>
+    <string name="home_no_server_selected">No server selected</string>
 
     <!-- Servers Screen -->
     <string name="servers_ping">Ping</string>
@@ -24,9 +25,11 @@
     <string name="add_server_dialog_import_file">From File</string>
     <string name="add_server_dialog_paste">From Clipboard</string>
     <string name="delete_server_confirmation_title">Delete Server?</string>
-    <string name="delete_server_confirmation_text">This action cannot be undone.</string>
+    <string name="delete_server_confirmation_text">Are you sure you want to delete \"%s\"?</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
+    <string name="server_added_toast">Server added</string>
+    <string name="invalid_config_toast">Invalid config format</string>
 
     <!-- Settings Screen -->
     <string name="settings_auto_connect">Auto-connect on launch</string>

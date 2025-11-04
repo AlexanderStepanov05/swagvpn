@@ -74,11 +74,11 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private val configImportLauncher = registerForActivityResult(
+    private val configFileLauncher = registerForActivityResult(
         ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
         uri?.let {
-            serversViewModel.onConfigImported(it)
+            serversViewModel.onConfigFileImported(it)
         }
     }
 
@@ -100,8 +100,8 @@ class MainActivity : ComponentActivity() {
         }
 
         lifecycleScope.launch {
-            serversViewModel.importConfigRequest.collect {
-                configImportLauncher.launch("*/*")
+            serversViewModel.importFileRequest.collect {
+                configFileLauncher.launch("*/*")
             }
         }
 

@@ -1,5 +1,6 @@
 package com.retard.swag.ui.servers
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,12 +18,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.retard.swag.R
 import com.retard.swag.domain.model.Server
+import kotlinx.coroutines.flow.collectLatest
 
 private val PingGood = Color(0xFF388E3C)
 private val PingMedium = Color(0xFFF57C00)
@@ -33,6 +36,13 @@ fun ServersScreen(viewModel: ServersViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var serverToDelete by remember { mutableStateOf<Server?>(null) }
+    val context = LocalContext.current
+
+    LaunchedEffect(key1 = Unit) {
+        viewModel.events.collectLatest { message ->
+            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     Scaffold(
         floatingActionButton = {
@@ -58,7 +68,7 @@ fun ServersScreen(viewModel: ServersViewModel) {
     if (showAddDialog) {
         AddServerDialog(
             onDismiss = { showAddDialog = false },
-            onImportFromFile = { viewModel.importConfig(); showAddDialog = false },
+            onImportFromFile = { viewModel.requestImportFromFile(); showAddDialog = false },
             onPasteFromClipboard = { viewModel.addServerFromClipboard(it); showAddDialog = false }
         )
     }
@@ -85,7 +95,7 @@ private fun ServerList(
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(all = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp) // Space between items
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items(servers, key = { it.id }) { server ->
             ServerItem(
@@ -115,7 +125,7 @@ private fun ServerItem(
             .clip(MaterialTheme.shapes.medium)
             .clickable { onServerSelected(server.id) }
             .background(if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant)
-            .padding(horizontal = 8.dp, vertical = 6.dp), // Minimal vertical padding
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(text = countryCodeToEmojiFlag(server.countryCode), fontSize = 20.sp)

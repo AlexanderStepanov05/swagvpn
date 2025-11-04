@@ -54,12 +54,15 @@ class XrayVpnService : VpnService() {
         serviceScope.launch {
             vpnStateInternal.value = VpnState.Connecting
             try {
-                vpnInterface = createVpnInterface() ?: throw IllegalStateException("Failed to create VPN interface")
+                val pfd = createVpnInterface() ?: throw IllegalStateException("Failed to create VPN interface")
+                vpnInterface = pfd
+                val tunFd = pfd.detachFd()
 
-                val error = XrayManager.startXray(config)
+                val error = XrayManager.startXray(config, tunFd)
                 if (error != null) {
                     throw Exception("Xray failed to start: $error")
                 }
+
                 vpnStateInternal.value = VpnState.Connected
                 updateNotification("VPN is running")
             } catch (e: Exception) {
@@ -84,7 +87,7 @@ class XrayVpnService : VpnService() {
     private fun createVpnInterface(): ParcelFileDescriptor? {
         return Builder()
             .setMtu(1500)
-            .addAddress("10.0.0.1", 30)
+            .addAddress("172.19.0.1", 30)
             .addDnsServer("8.8.8.8")
             .addRoute("0.0.0.0", 0)
             .setSession(getString(R.string.app_name))

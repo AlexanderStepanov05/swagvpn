@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.retard.swag"
-        minSdk = 21
+        minSdk = 21 // Reverted back to 21
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
