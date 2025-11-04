@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import androidx.core.content.ContextCompat
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -73,7 +74,7 @@ class HomeViewModel @Inject constructor(
             action = XrayVpnService.ACTION_START
             putExtra(XrayVpnService.EXTRA_CONFIG, selectedServer.config)
         }
-        context.startForegroundService(intent)
+        ContextCompat.startForegroundService(context, intent)
     }
 
     private fun stopVpn() {
