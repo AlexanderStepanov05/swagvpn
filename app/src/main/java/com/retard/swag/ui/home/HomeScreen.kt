@@ -63,22 +63,19 @@ fun HomeScreen(viewModel: HomeViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                when (targetState) {
-                    is VpnState.Connecting -> {
-                        CircularProgressIndicator(modifier = Modifier.size(150.dp))
-                    }
-                    else -> {
-                        Button(
-                            onClick = { viewModel.toggleVpnConnection() },
-                            modifier = Modifier.size(150.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Power,
-                                contentDescription = stringResource(R.string.home_tap_to_connect),
-                                modifier = Modifier.size(64.dp)
-                            )
-                        }
+                Button(
+                    onClick = { viewModel.toggleVpnConnection() },
+                    modifier = Modifier.size(150.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = buttonColor)
+                ) {
+                    if (targetState is VpnState.Connecting) {
+                        CircularProgressIndicator()
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Power,
+                            contentDescription = stringResource(R.string.home_tap_to_connect),
+                            modifier = Modifier.size(64.dp)
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))

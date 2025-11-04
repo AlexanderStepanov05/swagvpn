@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.net.HttpURLConnection
+import java.net.URL
 import javax.inject.Inject
 
 data class ServersUiState(
@@ -59,13 +61,53 @@ class ServersViewModel @Inject constructor(
 
     fun addServerFromClipboard(clipboardContent: String) {
         viewModelScope.launch {
-            val server = ConfigParser.parse(clipboardContent)
-            if (server != null) {
-                addNewServer(server)
-                _events.emit(context.getString(R.string.server_added_toast))
-            } else {
-                _events.emit(context.getString(R.string.invalid_config_toast))
+            val text = clipboardContent.trim()
+            when {
+                text.startsWith("http://") || text.startsWith("https://") -> {
+                    val body = downloadUrl(text)
+                    if (body.isNullOrBlank()) {
+                        _events.emit(context.getString(R.string.invalid_config_toast))
+                        return@launch
+                    }
+                    val servers = ConfigParser.parseSubscriptionJson(body)
+                    if (servers.isNotEmpty()) {
+                        addNewServers(servers)
+                        _events.emit(context.getString(R.string.server_added_toast))
+                    } else {
+                        _events.emit(context.getString(R.string.invalid_config_toast))
+                    }
+                }
+                text.startsWith("[") || text.startsWith("{") -> {
+                    val servers = ConfigParser.parseSubscriptionJson(text)
+                    if (servers.isNotEmpty()) {
+                        addNewServers(servers)
+                        _events.emit(context.getString(R.string.server_added_toast))
+                    } else {
+                        _events.emit(context.getString(R.string.invalid_config_toast))
+                    }
+                }
+                else -> {
+                    val server = ConfigParser.parse(text)
+                    if (server != null) {
+                        addNewServer(server)
+                        _events.emit(context.getString(R.string.server_added_toast))
+                    } else {
+                        _events.emit(context.getString(R.string.invalid_config_toast))
+                    }
+                }
             }
+        }
+    }
+
+    private suspend fun downloadUrl(url: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val conn = URL(url).openConnection() as HttpURLConnection
+            conn.connectTimeout = 10000
+            conn.readTimeout = 10000
+            conn.requestMethod = "GET"
+            conn.inputStream.bufferedReader().use { it.readText() }
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -79,12 +121,21 @@ class ServersViewModel @Inject constructor(
                     _events.emit("Failed to read file content")
                     return@launch
                 }
-                val server = ConfigParser.parse(content)
-                if (server != null) {
-                    addNewServer(server)
+                val trimmed = content.trim()
+                val servers = if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
+                    ConfigParser.parseSubscriptionJson(trimmed)
+                } else emptyList()
+                if (servers.isNotEmpty()) {
+                    addNewServers(servers)
                     _events.emit(context.getString(R.string.server_added_toast))
                 } else {
-                    _events.emit(context.getString(R.string.invalid_config_toast))
+                    val server = ConfigParser.parse(trimmed)
+                    if (server != null) {
+                        addNewServer(server)
+                        _events.emit(context.getString(R.string.server_added_toast))
+                    } else {
+                        _events.emit(context.getString(R.string.invalid_config_toast))
+                    }
                 }
             } catch (e: Exception) {
                 _events.emit("Error: ${e.message}")
@@ -104,7 +155,15 @@ class ServersViewModel @Inject constructor(
         }
         selectedServerRepository.selectServer(server)
     }
-    
+
+    private fun addNewServers(servers: List<Server>) {
+        if (servers.isEmpty()) return
+        _uiState.update {
+            it.copy(servers = it.servers + servers, selectedServerId = servers.last().id)
+        }
+        selectedServerRepository.selectServer(servers.last())
+    }
+
     fun selectServer(serverId: String) {
         _uiState.update {
             val currentSelectedId = it.selectedServerId

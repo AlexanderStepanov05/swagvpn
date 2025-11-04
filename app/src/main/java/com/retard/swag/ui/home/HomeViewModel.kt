@@ -33,7 +33,7 @@ class HomeViewModel @Inject constructor(
 
     fun toggleVpnConnection() {
         viewModelScope.launch {
-            if (vpnState.value is VpnState.Connected) {
+            if (vpnState.value is VpnState.Connected || vpnState.value is VpnState.Connecting) {
                 stopVpn()
                 return@launch
             }

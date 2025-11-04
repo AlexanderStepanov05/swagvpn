@@ -1,6 +1,7 @@
 package com.retard.swag.service
 
 import android.content.Context
+import android.util.Log
 import libv2ray.CoreCallbackHandler
 import libv2ray.CoreController
 import libv2ray.Libv2ray
@@ -19,43 +20,50 @@ object XrayManager {
     private val _state = MutableStateFlow<XrayState>(XrayState.Stopped)
     val state = _state.asStateFlow()
 
-    var coreController: CoreController? = null
-        private set
+    private var coreController: CoreController? = null
 
     val isRunning: Boolean
         get() = coreController?.isRunning == true
 
     fun init(context: Context) {
+        Log.d("XrayManager", "Init core env at ${context.filesDir.path}")
         Libv2ray.initCoreEnv(context.filesDir.path, "")
     }
 
     fun startXray(config: String, tunFd: Int): String? {
         if (isRunning) {
+            Log.w("XrayManager", "startXray called while running")
             return "Xray is already running"
         }
 
         val callback = object : CoreCallbackHandler {
             override fun onEmitStatus(code: Long, message: String?): Long {
+                Log.d("XrayManager", "onEmitStatus: code=$code, message=$message")
                 message?.let { _state.value = XrayState.Starting(it) }
                 return 0
             }
             override fun shutdown(): Long {
+                Log.d("XrayManager", "shutdown callback")
                 _state.value = XrayState.Stopped
                 return 0
             }
             override fun startup(): Long {
-                return 0
+                Log.d("XrayManager", "startup callback, returning tunFd=$tunFd")
+                return tunFd.toLong()
             }
         }
 
         try {
+            Log.d("XrayManager", "Creating core controller and starting loop")
             val controller = Libv2ray.newCoreController(callback)
             controller.startLoop(config)
             coreController = controller
             _state.value = XrayState.Started
+            Log.d("XrayManager", "Core started")
         } catch (e: Exception) {
             val errorMessage = e.message ?: "Unknown error"
             _state.value = XrayState.Error(errorMessage)
+            Log.e("XrayManager", "Failed to start core: $errorMessage", e)
             return errorMessage
         }
 
@@ -65,16 +73,21 @@ object XrayManager {
     fun stopXray() {
         if (!isRunning || coreController == null) return
         try {
+            Log.d("XrayManager", "Stopping core loop")
             coreController?.stopLoop()
         } catch (e: Exception) {
+            Log.e("XrayManager", "Error stopping core", e)
         }
         coreController = null
+        Log.d("XrayManager", "Core stopped")
     }
 
     fun measureDelay(config: String): Long {
         return try {
+            Log.d("XrayManager", "Measuring delay")
             Libv2ray.measureOutboundDelay(config, "https://www.google.com")
         } catch (e: Exception) {
+            Log.e("XrayManager", "Measure delay failed", e)
             -1
         }
     }
@@ -84,6 +97,7 @@ object XrayManager {
          return try {
             coreController?.queryStats(tag, direct) ?: 0
          } catch (e: Exception) {
+            Log.e("XrayManager", "Query stats failed", e)
             0
          }
     }
