@@ -96,10 +96,13 @@ class XrayVpnService : VpnService() {
 
     private fun createVpnInterface(): ParcelFileDescriptor? {
         return Builder()
-            .setMtu(1500)
+            .setMtu(1400)
             .addAddress("172.19.0.1", 30)
+            .addAddress("fdfe:dcba:9876::1", 126)
+            .addDnsServer("1.1.1.1")
             .addDnsServer("8.8.8.8")
             .addRoute("0.0.0.0", 0)
+            .addRoute("::", 0)
             .setSession(getString(R.string.app_name))
             .establish()
     }

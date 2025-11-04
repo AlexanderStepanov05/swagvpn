@@ -25,6 +25,17 @@ object XrayManager {
     val isRunning: Boolean
         get() = coreController?.isRunning == true
 
+    private const val LOG_BUFFER_SIZE = 100
+    private val _recentLogs = MutableStateFlow<List<String>>(emptyList())
+    val recentLogs = _recentLogs.asStateFlow()
+
+    private fun appendLog(message: String) {
+        val updated = (_recentLogs.value + message).takeLast(LOG_BUFFER_SIZE)
+        _recentLogs.value = updated
+    }
+
+    fun clearLogs() { _recentLogs.value = emptyList() }
+
     fun init(context: Context) {
         Log.d("XrayManager", "Init core env at ${context.filesDir.path}")
         Libv2ray.initCoreEnv(context.filesDir.path, "")
@@ -39,16 +50,21 @@ object XrayManager {
         val callback = object : CoreCallbackHandler {
             override fun onEmitStatus(code: Long, message: String?): Long {
                 Log.d("XrayManager", "onEmitStatus: code=$code, message=$message")
-                message?.let { _state.value = XrayState.Starting(it) }
+                message?.let {
+                    _state.value = XrayState.Starting(it)
+                    appendLog(it)
+                }
                 return 0
             }
             override fun shutdown(): Long {
                 Log.d("XrayManager", "shutdown callback")
                 _state.value = XrayState.Stopped
+                appendLog("Core shutdown")
                 return 0
             }
             override fun startup(): Long {
                 Log.d("XrayManager", "startup callback, returning tunFd=$tunFd")
+                appendLog("Starting core successfully")
                 return tunFd.toLong()
             }
         }
@@ -60,10 +76,12 @@ object XrayManager {
             coreController = controller
             _state.value = XrayState.Started
             Log.d("XrayManager", "Core started")
+            appendLog("Core started")
         } catch (e: Exception) {
             val errorMessage = e.message ?: "Unknown error"
             _state.value = XrayState.Error(errorMessage)
             Log.e("XrayManager", "Failed to start core: $errorMessage", e)
+            appendLog("Error: $errorMessage")
             return errorMessage
         }
 
@@ -77,9 +95,11 @@ object XrayManager {
             coreController?.stopLoop()
         } catch (e: Exception) {
             Log.e("XrayManager", "Error stopping core", e)
+            appendLog("Error stopping core: ${e.message}")
         }
         coreController = null
         Log.d("XrayManager", "Core stopped")
+        appendLog("Core stopped")
     }
 
     fun measureDelay(config: String): Long {
