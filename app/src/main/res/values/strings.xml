@@ -25,13 +25,16 @@
     <string name="add_server_dialog_import_file">From File</string>
     <string name="add_server_dialog_paste">From Clipboard</string>
     <string name="delete_server_confirmation_title">Delete Server?</string>
-    <string name="delete_server_confirmation_text">Are you sure you want to delete \"%s\"?</string>
+    <string name="delete_server_confirmation_text">Are you sure you want to delete &quot;%s&quot;?</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
     <string name="server_added_toast">Server added</string>
     <string name="invalid_config_toast">Invalid config format</string>
+    <string name="servers_group_no_subscription">Manual and single servers</string>
+    <string name="refresh">Refresh</string>
 
     <!-- Settings Screen -->
     <string name="settings_auto_connect">Auto-connect on launch</string>
     <string name="settings_dark_theme">Dark Theme</string>
+    <string name="settings_language">Language</string>
 </resources>

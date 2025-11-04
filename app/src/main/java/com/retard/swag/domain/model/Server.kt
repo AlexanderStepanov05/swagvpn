@@ -6,5 +6,7 @@ data class Server(
     val country: String,
     val countryCode: String,
     val config: String, // This will hold the Xray config in JSON format
-    val ping: Int? = null
+    val ping: Int? = null,
+    val subscriptionId: String? = null,
+    val subscriptionName: String? = null
 )

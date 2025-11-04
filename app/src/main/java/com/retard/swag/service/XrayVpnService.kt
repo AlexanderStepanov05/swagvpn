@@ -50,7 +50,7 @@ class XrayVpnService : VpnService() {
             }
             ACTION_STOP -> stopVpnFlow()
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     private fun startVpnFlow(config: String) {

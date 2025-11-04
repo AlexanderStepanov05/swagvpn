@@ -197,11 +197,9 @@ object ConfigParser {
         }
         val country = base
 
-        val suffix = when {
-            address.matches(Regex("\\d+\\.\\d+\\.\\d+\\.\\d+")) -> address.substringAfterLast('.')
-            address.isNotBlank() -> address.takeLast(4)
-            else -> ""
-        }
+        val digits = address.filter { it.isDigit() }
+        val last4 = if (digits.length >= 4) digits.takeLast(4) else digits
+        val suffix = if (last4.isNotBlank()) "***$last4" else ""
         return Triple(country, suffix, countryCode)
     }
 }

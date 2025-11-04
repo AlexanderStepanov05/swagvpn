@@ -54,11 +54,14 @@ fun ServersScreen(viewModel: ServersViewModel) {
             }
         }
     ) { paddingValues ->
-        ServerList(
+        GroupedServerList(
             modifier = Modifier.padding(paddingValues),
             servers = uiState.servers,
+            expandedGroups = uiState.expandedGroups,
             selectedServerId = uiState.selectedServerId,
             pingingServerId = uiState.pingingServerId,
+            onToggleGroup = viewModel::toggleGroup,
+            onRefreshGroup = viewModel::refreshGroup,
             onServerSelected = viewModel::selectServer,
             onPingClicked = viewModel::pingServer,
             onDeleteClicked = { serverToDelete = it }
@@ -69,7 +72,9 @@ fun ServersScreen(viewModel: ServersViewModel) {
         AddServerDialog(
             onDismiss = { showAddDialog = false },
             onImportFromFile = { viewModel.requestImportFromFile(); showAddDialog = false },
-            onPasteFromClipboard = { viewModel.addServerFromClipboard(it); showAddDialog = false }
+            onPasteUri = { viewModel.addServerFromClipboard(it); showAddDialog = false },
+            onPasteJson = { viewModel.addServerFromClipboard(it); showAddDialog = false },
+            onPasteSubscription = { viewModel.addServerFromClipboard(it); showAddDialog = false }
         )
     }
 
@@ -79,6 +84,78 @@ fun ServersScreen(viewModel: ServersViewModel) {
             onConfirm = { viewModel.deleteServer(it.id); serverToDelete = null },
             onDismiss = { serverToDelete = null }
         )
+    }
+}
+
+@Composable
+private fun GroupedServerList(
+    servers: List<Server>,
+    expandedGroups: Set<String>,
+    selectedServerId: String?,
+    pingingServerId: String?,
+    onToggleGroup: (String) -> Unit,
+    onRefreshGroup: (String) -> Unit = {},
+    onServerSelected: (String) -> Unit,
+    onPingClicked: (String) -> Unit,
+    onDeleteClicked: (Server) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val groups = remember(servers) {
+        servers.groupBy { it.subscriptionId ?: "__no_subscription__" }.toList()
+    }
+    LazyColumn(
+        modifier = modifier.fillMaxSize(),
+        contentPadding = PaddingValues(all = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(groups) { (groupId, groupServers) ->
+            val title = groupServers.firstOrNull()?.subscriptionName ?: stringResource(R.string.servers_group_no_subscription)
+            GroupCard(
+                title = title,
+                expanded = expandedGroups.contains(groupId),
+                onToggle = { onToggleGroup(groupId) },
+                onRefresh = if (groupId != "__no_subscription__") ({ onRefreshGroup(groupId) }) else null
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    groupServers.forEach { server ->
+                        ServerItem(
+                            server = server,
+                            isSelected = selectedServerId == server.id,
+                            isPinging = pingingServerId == server.id,
+                            onServerSelected = onServerSelected,
+                            onPingClicked = onPingClicked,
+                            onDeleteClicked = { onDeleteClicked(server) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupCard(title: String, expanded: Boolean, onToggle: () -> Unit, onRefresh: (() -> Unit)?, content: @Composable () -> Unit) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onToggle() }
+                    .padding(vertical = 6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    onRefresh?.let { TextButton(onClick = it) { Text(stringResource(R.string.refresh)) } }
+                    Text(if (expanded) "−" else "+", style = MaterialTheme.typography.titleMedium)
+                }
+            }
+            if (expanded) {
+                Spacer(Modifier.height(4.dp))
+                content()
+            }
+        }
     }
 }
 
@@ -207,32 +284,42 @@ fun DeleteConfirmationDialog(
 fun AddServerDialog(
     onDismiss: () -> Unit,
     onImportFromFile: () -> Unit,
-    onPasteFromClipboard: (String) -> Unit
+    onPasteUri: (String) -> Unit,
+    onPasteJson: (String) -> Unit,
+    onPasteSubscription: (String) -> Unit
 ) {
     val clipboardManager = LocalClipboardManager.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.add_server_dialog_title)) },
-        text = { Text(stringResource(R.string.add_server_dialog_text)) },
-        confirmButton = {
-            TextButton(onClick = onImportFromFile) {
-                Text(stringResource(R.string.add_server_dialog_import_file))
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.add_server_dialog_text))
+                Divider()
+                TextButton(onClick = onImportFromFile) { Text(stringResource(R.string.add_server_dialog_import_file)) }
+                TextButton(onClick = {
+                    clipboardManager.getText()?.text?.let { onPasteUri(it) }
+                    onDismiss()
+                }) { Text("Вставить URI конфига") }
+                TextButton(onClick = {
+                    clipboardManager.getText()?.text?.let { onPasteJson(it) }
+                    onDismiss()
+                }) { Text("Вставить JSON конфига") }
+                TextButton(onClick = {
+                    clipboardManager.getText()?.text?.let { onPasteSubscription(it) }
+                    onDismiss()
+                }) { Text("Вставить URL подписки") }
             }
         },
-        dismissButton = {
-            TextButton(onClick = {
-                clipboardManager.getText()?.text?.let { onPasteFromClipboard(it) }
-                onDismiss()
-            }) {
-                Text(stringResource(R.string.add_server_dialog_paste))
-            }
-        }
+        confirmButton = {},
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } }
     )
 }
 
 private fun countryCodeToEmojiFlag(countryCode: String): String {
-    return countryCode
-        .uppercase()
-        .map { char -> Character.toChars(char.code + 0x1F1A5) }
-        .joinToString("")
+    val cc = countryCode.uppercase()
+    if (cc.length != 2 || cc.any { it !in 'A'..'Z' }) return "🏳️"
+    val first = 0x1F1E6 + (cc[0] - 'A')
+    val second = 0x1F1E6 + (cc[1] - 'A')
+    return String(intArrayOf(first, second), 0, 2)
 }

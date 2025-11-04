@@ -36,6 +36,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import com.retard.swag.ui.home.HomeScreen
 import com.retard.swag.ui.home.HomeViewModel
 import com.retard.swag.ui.servers.ServersScreen
@@ -105,8 +107,18 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Apply language setting
+        lifecycleScope.launch {
+            mainViewModel.isDarkThemeEnabled.collect { /* keep subscription alive */ }
+        }
+
         setContent {
             val isDarkTheme by mainViewModel.isDarkThemeEnabled.collectAsState()
+            // Observe language from Settings via a lightweight ViewModel accessor
+            val settingsVm: com.retard.swag.ui.settings.SettingsViewModel by viewModels()
+            val lang by settingsVm.uiState.collectAsState()
+            val locales = LocaleListCompat.forLanguageTags(lang.language)
+            AppCompatDelegate.setApplicationLocales(locales)
             SwagvpnTheme(darkTheme = isDarkTheme) {
                 val navController = rememberNavController()
                 Scaffold(

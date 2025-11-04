@@ -29,7 +29,8 @@ import javax.inject.Inject
 data class ServersUiState(
     val servers: List<Server> = emptyList(),
     val selectedServerId: String? = null,
-    val pingingServerId: String? = null
+    val pingingServerId: String? = null,
+    val expandedGroups: Set<String> = emptySet()
 )
 
 @HiltViewModel
@@ -46,6 +47,12 @@ class ServersViewModel @Inject constructor(
 
     private val _importFileRequest = MutableSharedFlow<Unit>()
     val importFileRequest = _importFileRequest.asSharedFlow()
+
+    fun requestImportFromFile() {
+        viewModelScope.launch {
+            _importFileRequest.emit(Unit)
+        }
+    }
 
     fun deleteServer(serverId: String) {
         _uiState.update { currentState ->
@@ -71,7 +78,11 @@ class ServersViewModel @Inject constructor(
                     }
                     val servers = ConfigParser.parseSubscriptionJson(body)
                     if (servers.isNotEmpty()) {
-                        addNewServers(servers)
+                        val subId = text
+                        val subName = runCatching { Uri.parse(text).host ?: text }.getOrDefault(text)
+                        val enriched = servers.map { it.copy(subscriptionId = subId, subscriptionName = subName) }
+                        addNewServers(enriched)
+                        expandGroup(subId)
                         _events.emit(context.getString(R.string.server_added_toast))
                     } else {
                         _events.emit(context.getString(R.string.invalid_config_toast))
@@ -143,12 +154,6 @@ class ServersViewModel @Inject constructor(
         }
     }
 
-    fun requestImportFromFile() {
-        viewModelScope.launch {
-            _importFileRequest.emit(Unit)
-        }
-    }
-
     private fun addNewServer(server: Server) {
         _uiState.update {
             it.copy(servers = it.servers + server, selectedServerId = server.id)
@@ -198,6 +203,41 @@ class ServersViewModel @Inject constructor(
                 }
                 state.copy(servers = updatedServers, pingingServerId = null)
             }
+        }
+    }
+
+    fun toggleGroup(groupId: String) {
+        _uiState.update { state ->
+            val newSet = state.expandedGroups.toMutableSet()
+            if (!newSet.add(groupId)) newSet.remove(groupId)
+            state.copy(expandedGroups = newSet)
+        }
+    }
+
+    private fun expandGroup(groupId: String) {
+        _uiState.update { state -> state.copy(expandedGroups = state.expandedGroups + groupId) }
+    }
+
+    fun refreshGroup(groupId: String) {
+        if (groupId == "__no_subscription__") return
+        viewModelScope.launch {
+            val body = downloadUrl(groupId)
+            if (body.isNullOrBlank()) {
+                _events.emit(context.getString(R.string.invalid_config_toast))
+                return@launch
+            }
+            val servers = ConfigParser.parseSubscriptionJson(body)
+            if (servers.isEmpty()) {
+                _events.emit(context.getString(R.string.invalid_config_toast))
+                return@launch
+            }
+            val subName = runCatching { Uri.parse(groupId).host ?: groupId }.getOrDefault(groupId)
+            val enriched = servers.map { it.copy(subscriptionId = groupId, subscriptionName = subName) }
+            _uiState.update { state ->
+                val filtered = state.servers.filterNot { it.subscriptionId == groupId }
+                state.copy(servers = filtered + enriched, expandedGroups = state.expandedGroups + groupId)
+            }
+            _events.emit(context.getString(R.string.server_added_toast))
         }
     }
 }

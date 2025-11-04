@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -20,6 +21,7 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     private object PreferencesKeys {
         val IS_AUTO_CONNECT_ENABLED = booleanPreferencesKey("is_auto_connect_enabled")
         val IS_DARK_THEME_ENABLED = booleanPreferencesKey("is_dark_theme_enabled")
+        val LANGUAGE = stringPreferencesKey("language")
     }
 
     val isAutoConnectEnabled: Flow<Boolean> = context.dataStore.data
@@ -32,6 +34,9 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
             it[PreferencesKeys.IS_DARK_THEME_ENABLED] ?: false
         }
 
+    val language: Flow<String> = context.dataStore.data
+        .map { it[PreferencesKeys.LANGUAGE] ?: "ru" }
+
     suspend fun setAutoConnect(enabled: Boolean) {
         context.dataStore.edit {
             it[PreferencesKeys.IS_AUTO_CONNECT_ENABLED] = enabled
@@ -41,6 +46,12 @@ class SettingsRepository @Inject constructor(@ApplicationContext private val con
     suspend fun setDarkTheme(enabled: Boolean) {
         context.dataStore.edit {
             it[PreferencesKeys.IS_DARK_THEME_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setLanguage(lang: String) {
+        context.dataStore.edit {
+            it[PreferencesKeys.LANGUAGE] = lang
         }
     }
 }

@@ -23,11 +23,13 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 settingsRepository.isAutoConnectEnabled,
-                settingsRepository.isDarkThemeEnabled
-            ) { isAutoConnectEnabled, isDarkThemeEnabled ->
+                settingsRepository.isDarkThemeEnabled,
+                settingsRepository.language
+            ) { isAutoConnectEnabled, isDarkThemeEnabled, language ->
                 SettingsUiState(
                     isAutoConnectEnabled = isAutoConnectEnabled,
-                    isDarkThemeEnabled = isDarkThemeEnabled
+                    isDarkThemeEnabled = isDarkThemeEnabled,
+                    language = language
                 )
             }.collect {
                 _uiState.value = it
@@ -44,6 +46,12 @@ class SettingsViewModel @Inject constructor(
     fun setDarkTheme(enabled: Boolean) {
         viewModelScope.launch {
             settingsRepository.setDarkTheme(enabled)
+        }
+    }
+
+    fun setLanguage(lang: String) {
+        viewModelScope.launch {
+            settingsRepository.setLanguage(lang)
         }
     }
 }
